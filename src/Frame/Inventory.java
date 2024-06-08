@@ -17,22 +17,38 @@ public class Inventory extends javax.swing.JFrame {
     private ResultSet Rs;
     private String sql ="";
     
-    public Inventory() {
-        initComponents();
-        KoneksiDatabase();
-        
-    }
+    String _username;
+    String _role;
     
-    private void KoneksiDatabase(){
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            Con = DriverManager.getConnection("jdbc:mysql://localhost:3306/logistik", "root", "");
-            St = Con.createStatement();
-            JOptionPane.showMessageDialog(null, "Koneksi Berhasil");
-        } catch (Exception e){
-            System.out.println("Koneksi gagal" + e.getMessage());
+    private static final String DB_URL = "jdbc:mysql://localhost/db";
+    private static final String USER = "root";
+    private static final String PASS = "Qa04091518";
+
+    private static Connection conn;
+    private static Statement stmt;
+    private static ResultSet rs;
+    
+    public Inventory(String username, String role) {
+        initComponents();
+        
+         try {
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            stmt = conn.createStatement();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        loadInventory();
+        this._role = role;
+        this._username = username;
+        
+        if (role.equals("Regular User")) {
+            Update.setVisible(false);
+            Delete.setVisible(false);
+            Add.setVisible(false);
         }
     }
+    
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -68,8 +84,6 @@ public class Inventory extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable2 = new javax.swing.JTable();
         Done = new javax.swing.JButton();
-        Report = new javax.swing.JButton();
-        DataPeminjaman = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
 
         menu1.setLabel("File");
@@ -301,11 +315,12 @@ public class Inventory extends javax.swing.JFrame {
                                         .addComponent(Search))))))
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(Done)
-                        .addGap(18, 18, 18)
                         .addComponent(Update)
                         .addGap(18, 18, 18)
-                        .addComponent(Delete)))
+                        .addComponent(Delete)
+                        .addGap(18, 18, 18)
+                        .addComponent(Done)
+                        .addGap(1, 1, 1)))
                 .addGap(75, 75, 75))
         );
         jPanel3Layout.setVerticalGroup(
@@ -351,24 +366,6 @@ public class Inventory extends javax.swing.JFrame {
                 .addGap(83, 83, 83))
         );
 
-        Report.setBackground(new java.awt.Color(163, 0, 0));
-        Report.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        Report.setText("Report");
-        Report.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ReportActionPerformed(evt);
-            }
-        });
-
-        DataPeminjaman.setBackground(new java.awt.Color(163, 0, 0));
-        DataPeminjaman.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        DataPeminjaman.setText("Data Peminjaman");
-        DataPeminjaman.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DataPeminjamanActionPerformed(evt);
-            }
-        });
-
         jButton4.setBackground(new java.awt.Color(255, 255, 255));
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/right-arrow.png"))); // NOI18N
         jButton4.addActionListener(new java.awt.event.ActionListener() {
@@ -386,11 +383,7 @@ public class Inventory extends javax.swing.JFrame {
                 .addComponent(jButton4)
                 .addGap(29, 29, 29)
                 .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(Report)
-                .addGap(18, 18, 18)
-                .addComponent(DataPeminjaman)
-                .addGap(75, 75, 75))
+                .addGap(75, 1007, Short.MAX_VALUE))
             .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
@@ -398,9 +391,6 @@ public class Inventory extends javax.swing.JFrame {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(Report)
-                        .addComponent(DataPeminjaman))
                     .addComponent(jButton4)
                     .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -426,25 +416,42 @@ public class Inventory extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_jButton3ActionPerformed
 
-    private void ReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ReportActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ReportActionPerformed
-
-    private void DataPeminjamanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DataPeminjamanActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_DataPeminjamanActionPerformed
-
     private void SearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SearchActionPerformed
-        String searchID = JOptionPane.showInputDialog(this, "Masukkan ID Barang:");
+        String searchName = JOptionPane.showInputDialog(this, "Masukkan Nama Barang:");
 
-        for (int i = 0; i < jTable2.getRowCount(); i++) {
-            String idBarang = jTable2.getValueAt(i, 0).toString();
-            if (idBarang.equals(searchID)) {
-                jTable2.setRowSelectionInterval(i, i);
-                jTable2.scrollRectToVisible(jTable2.getCellRect(i, 0, true));
-                break;
+        if (searchName != null && !searchName.trim().isEmpty()) {
+            DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+            clearTable();  // Kosongkan tabel sebelum menambahkan hasil pencarian
+
+            try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+                 PreparedStatement statement = connection.prepareStatement("SELECT * FROM inventory WHERE NamaBarang LIKE ?")) {
+                 
+                statement.setString(1, "%" + searchName + "%");
+                ResultSet resultSet = statement.executeQuery();
+
+                while (resultSet.next()) {
+                    String idBarang = resultSet.getString("IdBarang");
+                    String namaBarang = resultSet.getString("NamaBarang");
+                    String kategori = resultSet.getString("Kategori");
+                    int total = resultSet.getInt("Total");
+                    int stok = resultSet.getInt("Stok");
+
+                    model.addRow(new Object[]{idBarang, namaBarang, kategori, total, stok});
+                }
+
+                if (model.getRowCount() == 0) {
+                    JOptionPane.showMessageDialog(this, "Barang tidak ditemukan.");
+                }
+
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Gagal mencari data dari database: " + e.getMessage());
             }
         }
+    }                                      
+
+    private void clearTable() {
+        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+        model.setRowCount(0);  // Mengosongkan tabel dengan mengatur jumlah baris menjadi 0
     }//GEN-LAST:event_SearchActionPerformed
 
     private void KategoriBarangActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_KategoriBarangActionPerformed
@@ -476,9 +483,10 @@ public class Inventory extends javax.swing.JFrame {
 
                 DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
                 model.removeRow(selectedRowIndex);
-
-                String query = "DELETE FROM inventory WHERE IdBarang=?";
-                PreparedStatement pst = Con.prepareStatement(query);
+             
+                Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+                PreparedStatement pst = connection.prepareStatement("DELETE FROM inventory WHERE IdBarang=?");
+                
                 pst.setString(1, idBarang);
                 pst.executeUpdate();
                 
@@ -490,7 +498,7 @@ public class Inventory extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Pilih baris yang ingin dihapus.");
         }
     }//GEN-LAST:event_DeleteActionPerformed
-
+    
     private void UpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateActionPerformed
         int selectedRowIndex = jTable2.getSelectedRow();
 
@@ -499,20 +507,24 @@ public class Inventory extends javax.swing.JFrame {
                 String idBarang = (String) jTable2.getValueAt(selectedRowIndex, 0);
                 String namaBarang = (String) jTable2.getValueAt(selectedRowIndex, 1);
                 String kategoriBarang = (String) jTable2.getValueAt(selectedRowIndex, 2);
-                int total = Integer.parseInt((String) jTable2.getValueAt(selectedRowIndex, 3));
-                int stok = Integer.parseInt((String) jTable2.getValueAt(selectedRowIndex, 4));
+                // Asumsikan kolom 3 dan 4 adalah Integer
+                int total = (Integer) jTable2.getValueAt(selectedRowIndex, 3);
+                int stok = (Integer) jTable2.getValueAt(selectedRowIndex, 4);
 
                 IdBarang.setText(idBarang);
                 NamaBarang.setText(namaBarang);
                 KategoriBarang.setText(kategoriBarang);
                 Total.setText(String.valueOf(total));
                 Stok.setText(String.valueOf(stok));
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Format total atau stok tidak valid.");
+            } catch (ClassCastException e) {
+                JOptionPane.showMessageDialog(this, "Terjadi kesalahan tipe data di tabel.", "Kesalahan", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage(), "Kesalahan", JOptionPane.ERROR_MESSAGE);
             }
         } else {
-            JOptionPane.showMessageDialog(this, "Pilih baris yang ingin diupdate.");
+            JOptionPane.showMessageDialog(this, "Pilih baris yang ingin diupdate.", "Informasi", JOptionPane.INFORMATION_MESSAGE);
         }
+
     }//GEN-LAST:event_UpdateActionPerformed
 
     private void AddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddActionPerformed
@@ -527,15 +539,17 @@ public class Inventory extends javax.swing.JFrame {
         try {
             if (selectedRowIndex != -1) {
                 DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
-
+                
                 model.setValueAt(idBarang, selectedRowIndex, 0);
                 model.setValueAt(namaBarang, selectedRowIndex, 1);
                 model.setValueAt(kategoriBarang, selectedRowIndex, 2);
                 model.setValueAt(total, selectedRowIndex, 3);
                 model.setValueAt(stok, selectedRowIndex, 4);
 
-                String updateQuery = "UPDATE inventory SET NamaBarang=?, Kategori=?, Total=?, Stok=? WHERE IdBarang=?";
-                PreparedStatement pst = Con.prepareStatement(updateQuery);
+                
+                Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+                PreparedStatement pst = connection.prepareStatement("UPDATE inventory SET NamaBarang=?, Kategori=?, Total=?, Stok=? WHERE IdBarang=?");
+                
                 pst.setString(1, namaBarang);
                 pst.setString(2, kategoriBarang);
                 pst.setInt(3, total);
@@ -546,15 +560,16 @@ public class Inventory extends javax.swing.JFrame {
                 DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
                 String[] rowData = {idBarang, namaBarang, kategoriBarang, String.valueOf(total), String.valueOf(stok)};
                 model.addRow(rowData);
-
-                String query = "INSERT INTO inventory (IdBarang, NamaBarang, Kategori, Total, Stok) VALUES (?, ?, ?, ?, ?)";
-                PreparedStatement pst = Con.prepareStatement(query);
-                pst.setString(1, idBarang);
-                pst.setString(2, namaBarang);
-                pst.setString(3, kategoriBarang);
-                pst.setInt(4, total);
-                pst.setInt(5, stok);
-                pst.execute();
+                
+                Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+                PreparedStatement statement = connection.prepareStatement("INSERT INTO inventory (IdBarang, NamaBarang, Kategori, Total, Stok) VALUES (?, ?, ?, ?, ?)");
+                
+                statement.setString(1, idBarang);
+                statement.setString(2, namaBarang);
+                statement.setString(3, kategoriBarang);
+                statement.setInt(4, total);
+                statement.setInt(5, stok);
+                statement.execute();
             }
 
             JOptionPane.showMessageDialog(null, "Data berhasil diupdate atau ditambahkan ke database.");
@@ -568,14 +583,42 @@ public class Inventory extends javax.swing.JFrame {
         Total.setText("");
         Stok.setText("");
     }//GEN-LAST:event_AddActionPerformed
+    
+    private void loadInventory() {
+        DefaultTableModel model = (DefaultTableModel) jTable2.getModel();
+
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS);
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM inventory");
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                String idBarang = resultSet.getString("IdBarang");
+                String namaBarang = resultSet.getString("NamaBarang");
+                String kategori = resultSet.getString("Kategori");
+                int total = resultSet.getInt("Total");
+                int stok = resultSet.getInt("Stok");
+
+                model.addRow(new Object[]{idBarang, namaBarang, kategori, total, stok});
+            }
+
+        } catch (SQLException e) {
+            // Menangani error SQL
+            e.printStackTrace();
+        } catch (Exception e) {
+            // Menangani error umum
+            e.printStackTrace();
+        }
+    }
+
 
     private void DoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoneActionPerformed
         jTable2.clearSelection();
+        loadInventory();
     }//GEN-LAST:event_DoneActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
-        Dashboard dashboard = new Dashboard();
+        Dashboard dashboard = new Dashboard(_username, _role);
         dashboard.setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton4ActionPerformed
@@ -610,20 +653,18 @@ public class Inventory extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Inventory().setVisible(true);
+                
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton Add;
-    private javax.swing.JButton DataPeminjaman;
     private javax.swing.JButton Delete;
     private javax.swing.JButton Done;
     private javax.swing.JTextField IdBarang;
     private javax.swing.JTextField KategoriBarang;
     private javax.swing.JTextField NamaBarang;
-    private javax.swing.JButton Report;
     private javax.swing.JButton Search;
     private javax.swing.JTextField Stok;
     private javax.swing.JTextField Total;

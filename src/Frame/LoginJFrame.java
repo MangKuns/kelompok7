@@ -61,6 +61,37 @@ public class LoginJFrame extends javax.swing.JFrame {
             return false;
         }
     }
+    
+    private static String getUserRoleByUsername(String username) {
+        String role = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            String sql = "SELECT role FROM user WHERE username = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                role = rs.getString("role");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (conn != null) conn.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return role;
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -111,14 +142,14 @@ public class LoginJFrame extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setText("UserName");
+        jLabel3.setText("Username");
         jLabel3.setFont(new Font("Roboto", Font.PLAIN, 20));
 
         jLabel4.setText("Password");
         jLabel4.setFont(new Font("Roboto", Font.PLAIN, 20));
 
         jLabel5.setForeground(new java.awt.Color(255, 153, 153));
-        jLabel5.setText("Sing Up");
+        jLabel5.setText("Sign Up");
         jLabel5.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 jLabel5MouseClicked(evt);
@@ -244,7 +275,8 @@ public class LoginJFrame extends javax.swing.JFrame {
         if (checkLogin(jTextField1.getText(), jTextField2.getText())) {
             JOptionPane.showMessageDialog(null, "Login Berhasil!");
             dispose();
-            Dashboard dashboard = new Dashboard();
+            System.out.println(getUserRoleByUsername(jTextField1.getText()));
+            Dashboard dashboard = new Dashboard(jTextField1.getText(), getUserRoleByUsername(jTextField1.getText()));
             dashboard.setVisible(true);
         } else {
             JOptionPane.showMessageDialog(null, "Username or Password is Wrong");

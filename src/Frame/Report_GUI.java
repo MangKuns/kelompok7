@@ -13,6 +13,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.*;
 import java.sql.*;
+import javax.management.relation.Role;
 
 
 /**
@@ -30,8 +31,12 @@ public class Report_GUI extends javax.swing.JFrame {
     /**
      * Creates new form Report_GUI
      */
-    public Report_GUI() {
+    String _username;
+    String _role;
+    public Report_GUI(String username, String role) {
         initComponents();
+        this._role = role;
+        this._username = username;
 //        try {
 //            conn = (Connection) DriverManager.getConnection(DB_URL, USER, PASS);
 //            stmt = (Statement) conn.createStatement();
@@ -438,7 +443,7 @@ public class Report_GUI extends javax.swing.JFrame {
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
         // TODO add your handling code here:
         dispose();
-        Dashboard dashboard = new Dashboard();
+        Dashboard dashboard = new Dashboard(_username, _role);
         dashboard.setVisible(true);
     }//GEN-LAST:event_jButton9ActionPerformed
 
@@ -472,9 +477,7 @@ public class Report_GUI extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                Report_GUI reportGUI = new Report_GUI();
-                //reportGUI.loadReport(); // Panggil loadReport() di sini sebelum menampilkan GUI
-                reportGUI.setVisible(true);
+                
             }
         });
     }
