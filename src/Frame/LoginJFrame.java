@@ -14,6 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.swing.JOptionPane;
+import Class.UserClass;
+import Class.UserClass.AdminUser;
+import Class.UserClass.RegularUser;
 
 /**
  *
@@ -44,23 +47,23 @@ public class LoginJFrame extends javax.swing.JFrame {
         }
     }
     
-    public static boolean checkLogin(String username, String password) {
-        String query = "SELECT * FROM user WHERE username = ? AND password = ?";
-        
-        try  {
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-
-            ResultSet rs = pstmt.executeQuery();
-
-            return rs.next();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+//    public static boolean checkLogin(String username, String password) {
+//        String query = "SELECT * FROM user WHERE username = ? AND password = ?";
+//        
+//        try  {
+//            PreparedStatement pstmt = conn.prepareStatement(query);
+//            pstmt.setString(1, username);
+//            pstmt.setString(2, password);
+//
+//            ResultSet rs = pstmt.executeQuery();
+//
+//            return rs.next();
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
     
     private static String getUserRoleByUsername(String username) {
         String role = null;
@@ -135,12 +138,16 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         jLabel2.setText("Not an admin and don't have an account yet?");
 
+        jTextField1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+
         jCheckBox1.setText("Remember Me");
         jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jCheckBox1ActionPerformed(evt);
             }
         });
+
+        jTextField2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         jLabel3.setText("Username");
         jLabel3.setFont(new Font("Roboto", Font.PLAIN, 20));
@@ -271,12 +278,24 @@ public class LoginJFrame extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
+        String username = jTextField1.getText();
+        String password = jTextField2.getText();
         
-        if (checkLogin(jTextField1.getText(), jTextField2.getText())) {
+        String role = getUserRoleByUsername(username);
+        UserClass userClass = new UserClass();
+        UserClass.User user;
+            
+        if ("Admin".equalsIgnoreCase(role)) {
+            user = userClass.new AdminUser(username, role);
+        } else {
+            user = userClass.new RegularUser(username, role);
+        }
+
+        if (user.checkLogin(username, password)) {
             JOptionPane.showMessageDialog(null, "Login Berhasil!");
             dispose();
-            System.out.println(getUserRoleByUsername(jTextField1.getText()));
-            Dashboard dashboard = new Dashboard(jTextField1.getText(), getUserRoleByUsername(jTextField1.getText()));
+
+            Dashboard dashboard = new Dashboard(user);
             dashboard.setVisible(true);
         } else {
             JOptionPane.showMessageDialog(null, "Username or Password is Wrong");

@@ -5,6 +5,7 @@
  */
 package Frame;
 
+import Class.UserClass;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.awt.BorderLayout;
@@ -302,12 +303,13 @@ public class Rent_GUI extends javax.swing.JFrame {
         String username = textFieldUsername.getText();
         String statusPeminjaman = "Pending"; // Set status default sebagai "Pending"
         String tanggalPeminjaman = new java.sql.Date(System.currentTimeMillis()).toString(); // Tanggal hari ini
-        String lokasiBarang = textFieldLokasiBarang.getText();
+        String lokasiPinjam = textFieldLokasiBarang.getText();
         int jumlahBarang = Integer.parseInt(textFieldTotalPinjam.getText());
 
         try {
             // Membuat pernyataan SQL untuk memasukkan data baru ke tabel Transaksi
-            String query = "INSERT INTO Transaksi (ID_TRANSAKSI, ID_BARANG, USERNAME, STATUS_PEMINJAMAN, TANGGAL_PEMINJAMAN, JUMLAH_BARANG) VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO Transaksi (ID_TRANSAKSI, ID_BARANG, USERNAME, STATUS_PEMINJAMAN, TANGGAL_PEMINJAMAN, JUMLAH_BARANG, LOKASI_PINJAM) " +
+                           "VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, idTransaksi);
             preparedStatement.setString(2, idBarang);
@@ -315,6 +317,7 @@ public class Rent_GUI extends javax.swing.JFrame {
             preparedStatement.setString(4, statusPeminjaman);
             preparedStatement.setDate(5, java.sql.Date.valueOf(tanggalPeminjaman));
             preparedStatement.setInt(6, jumlahBarang);
+            preparedStatement.setString(7, lokasiPinjam); // Tambahkan lokasi pinjam ke pernyataan SQL
 
             // Eksekusi pernyataan SQL
             int rowsAffected = preparedStatement.executeUpdate();
@@ -323,11 +326,11 @@ public class Rent_GUI extends javax.swing.JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menambahkan transaksi.");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage());
         }
+
     
         // Optional: Clear text fields after adding the row
         textFieldUsername.setText("");
@@ -356,9 +359,18 @@ public class Rent_GUI extends javax.swing.JFrame {
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
         // TODO add your handling code here:
-        dispose();
-        Dashboard dashboard = new Dashboard(_username, _role);
+        UserClass userClass = new UserClass();
+        UserClass.User user;
+        
+        if ("Admin".equalsIgnoreCase(_role)) {
+            user = userClass.new AdminUser(_username, _role);
+        } else {
+            user = userClass.new RegularUser(_username, _role);
+        }
+
+        Dashboard dashboard = new Dashboard(user);
         dashboard.setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton9ActionPerformed
 
     /**

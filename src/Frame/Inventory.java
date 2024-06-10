@@ -1,5 +1,6 @@
 package Frame;
 
+import Class.UserClass;
 import Frame.Dashboard;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -501,7 +502,7 @@ public class Inventory extends javax.swing.JFrame {
     
     private void UpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateActionPerformed
         int selectedRowIndex = jTable2.getSelectedRow();
-
+        
         if (selectedRowIndex != -1) {
             try {
                 String idBarang = (String) jTable2.getValueAt(selectedRowIndex, 0);
@@ -602,10 +603,9 @@ public class Inventory extends javax.swing.JFrame {
             }
 
         } catch (SQLException e) {
-            // Menangani error SQL
             e.printStackTrace();
         } catch (Exception e) {
-            // Menangani error umum
+
             e.printStackTrace();
         }
     }
@@ -618,7 +618,16 @@ public class Inventory extends javax.swing.JFrame {
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
-        Dashboard dashboard = new Dashboard(_username, _role);
+        UserClass userClass = new UserClass();
+        UserClass.User user;
+        
+        if ("Admin".equalsIgnoreCase(_role)) {
+            user = userClass.new AdminUser(_username, _role);
+        } else {
+            user = userClass.new RegularUser(_username, _role);
+        }
+
+        Dashboard dashboard = new Dashboard(user);
         dashboard.setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton4ActionPerformed

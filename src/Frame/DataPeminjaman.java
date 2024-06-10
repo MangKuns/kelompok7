@@ -5,6 +5,7 @@
  */
 package Frame;
 
+import Class.UserClass;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -38,6 +39,10 @@ public class DataPeminjaman extends javax.swing.JFrame {
         
         this._username = username;
         this._role = role;
+        
+        if(role.equals("Regular User")) {
+            jButton8.setVisible(false);
+        }
         
         try {
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -73,6 +78,7 @@ public class DataPeminjaman extends javax.swing.JFrame {
         jButton6 = new javax.swing.JButton();
         jButton7 = new javax.swing.JButton();
         jTextField1 = new javax.swing.JTextField();
+        jButton8 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setBackground(new java.awt.Color(255, 255, 255));
@@ -124,7 +130,7 @@ public class DataPeminjaman extends javax.swing.JFrame {
 
             },
             new String [] {
-                "ID Transaksi", "Barang", "ID Barang", "Peminjam", "Tanggal Peminjaman", "Stok", "Status", "Jumlah Barang"
+                "ID Transaksi", "Barang", "ID Barang", "Peminjam", "Tanggal Peminjaman", "Lokasi Pinjam", "Status", "Jumlah Barang"
             }
         ));
         jScrollPane5.setViewportView(jTable1);
@@ -156,6 +162,15 @@ public class DataPeminjaman extends javax.swing.JFrame {
             }
         });
 
+        jButton8.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        jButton8.setForeground(new java.awt.Color(178, 45, 48));
+        jButton8.setText("Tolak");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -168,7 +183,9 @@ public class DataPeminjaman extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jButton7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton6))
+                        .addComponent(jButton6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton8))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -191,7 +208,8 @@ public class DataPeminjaman extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton6)
-                    .addComponent(jButton7))
+                    .addComponent(jButton7)
+                    .addComponent(jButton8))
                 .addGap(243, 243, 243))
         );
 
@@ -212,12 +230,12 @@ public class DataPeminjaman extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
     public void loadData() {
-        String[] columnNames = {"ID Transaksi", "Nama Barang", "ID Barang", "Nama Peminjam", "Tanggal Peminjaman", "Stok", "Status Peminjaman", "Jumlah Barang"};
+        String[] columnNames = {"ID Transaksi", "Nama Barang", "ID Barang", "Nama Peminjam", "Tanggal Peminjaman", "Lokasi Pinjam", "Status Peminjaman", "Jumlah Barang"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
 
         try {
             Statement stmt = conn.createStatement();
-            String query = "SELECT T.ID_TRANSAKSI, B.NamaBarang, T.ID_BARANG, U.Nama, T.TANGGAL_PEMINJAMAN, B.Stok, T.JUMLAH_BARANG, T.STATUS_PEMINJAMAN " +
+            String query = "SELECT T.ID_TRANSAKSI, B.NamaBarang, T.ID_BARANG, U.Nama, T.TANGGAL_PEMINJAMAN, T.LOKASI_PINJAM, T.JUMLAH_BARANG, T.STATUS_PEMINJAMAN " +
                            "FROM Transaksi T " +
                            "JOIN user U ON T.USERNAME = U.Username " +
                            "JOIN inventory B ON T.ID_BARANG = B.IdBarang";
@@ -229,11 +247,11 @@ public class DataPeminjaman extends javax.swing.JFrame {
                 String idBarang = rs.getString("ID_BARANG");
                 String namaUser = rs.getString("Nama");
                 String tanggalPeminjaman = rs.getString("TANGGAL_PEMINJAMAN");
-                int stokBarang = rs.getInt("Stok");
+                String lokasiPinjam = rs.getString("LOKASI_PINJAM");
                 int jumlahBarang = rs.getInt("JUMLAH_BARANG");
                 String statusPeminjaman = rs.getString("STATUS_PEMINJAMAN");
 
-                Object[] data = {idTransaksi, namaBarang, idBarang, namaUser, tanggalPeminjaman, stokBarang, statusPeminjaman, jumlahBarang};
+                Object[] data = {idTransaksi, namaBarang, idBarang, namaUser, tanggalPeminjaman, lokasiPinjam, statusPeminjaman, jumlahBarang};
                 tableModel.addRow(data);
             }
             jTable1.setModel(tableModel);
@@ -242,28 +260,53 @@ public class DataPeminjaman extends javax.swing.JFrame {
             e.printStackTrace();
         }
     }
-    public void updateStatusPeminjaman(int idTransaksi, String status) {
-    try {
-        String query = "UPDATE Transaksi SET STATUS_PEMINJAMAN = ? WHERE ID_TRANSAKSI = ?";
-        PreparedStatement pstmt = conn.prepareStatement(query);
-        pstmt.setString(1, status);
-        pstmt.setInt(2, idTransaksi);
-        pstmt.executeUpdate();
 
-        // Refresh data pada JTable
-        loadData();
+    public void updateStatusWithDiKembalikan(String idTransaksi, String statusAwal, String statusAkhir) {
+        try {
+            // Check if the initial status is "Disetujui"
+            if ("Disetujui".equalsIgnoreCase(statusAwal)) {
+                // Update status in Transaksi table to "Dikembalikan"
+                String updateTransaksiQuery = "UPDATE Transaksi SET STATUS_PEMINJAMAN = ? WHERE ID_TRANSAKSI = ?";
+                PreparedStatement pstmtTransaksi = conn.prepareStatement(updateTransaksiQuery);
+                pstmtTransaksi.setString(1, statusAkhir);
+                pstmtTransaksi.setString(2, idTransaksi);
 
-    } catch (Exception e) {
-        e.printStackTrace();
+                // Update inventory stock
+                String updateInventoryQuery = "UPDATE inventory i JOIN Transaksi t ON i.IdBarang = t.ID_BARANG " +
+                                              "SET i.Stok = i.Stok + t.JUMLAH_BARANG " +
+                                              "WHERE t.ID_TRANSAKSI = ?";
+                PreparedStatement pstmtInventory = conn.prepareStatement(updateInventoryQuery);
+                pstmtInventory.setString(1, idTransaksi);
+
+                // Execute updates
+                int transaksiRowsUpdated = pstmtTransaksi.executeUpdate();
+                int inventoryRowsUpdated = pstmtInventory.executeUpdate();
+
+                // Check if both updates were successful
+                if (transaksiRowsUpdated > 0 && inventoryRowsUpdated > 0) {
+                    JOptionPane.showMessageDialog(null, "Status transaksi berhasil diupdate menjadi " + statusAkhir);
+                    // Reload data after updating status
+                    loadData();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal mengupdate status transaksi atau menambahkan stok barang.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Status awal bukan 'Disetujui', tidak bisa menjalankan perubahan status.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
-}
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow >= 0) {
-            int idTransaksi = (int) jTable1.getValueAt(selectedRow, 0);
-            updateStatusPeminjaman(idTransaksi, "telah kembali");
+            String idTransaksi = (String) jTable1.getValueAt(selectedRow, 0);
+            String statusAwal = (String) jTable1.getValueAt(selectedRow, 6);
+            updateStatusWithDiKembalikan(idTransaksi, statusAwal, "telah kembali");
         }
     }//GEN-LAST:event_jButton6ActionPerformed
 
@@ -308,23 +351,130 @@ public class DataPeminjaman extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_jButton4ActionPerformed
+    
+    private void updateStatusWithApprove(String idTransaksi, String statusAwal, String statusAkhir) {
+        try {
+            // Check if the initial status is pending
+            if ("Pending".equals(statusAwal)) {
+                // Update status in Transaksi table
+                String updateTransaksiQuery = "UPDATE Transaksi SET STATUS_PEMINJAMAN = ? WHERE ID_TRANSAKSI = ?";
+                PreparedStatement pstmtTransaksi = conn.prepareStatement(updateTransaksiQuery);
+                pstmtTransaksi.setString(1, statusAkhir);
+                pstmtTransaksi.setString(2, idTransaksi);
 
+                // Update inventory stock
+                String updateInventoryQuery = "UPDATE inventory i JOIN Transaksi t ON i.IdBarang = t.ID_BARANG " +
+                                              "SET i.Stok = i.Stok - t.JUMLAH_BARANG " +
+                                              "WHERE t.ID_TRANSAKSI = ?";
+                PreparedStatement pstmtInventory = conn.prepareStatement(updateInventoryQuery);
+                pstmtInventory.setString(1, idTransaksi);
+
+                // Execute updates
+                int transaksiRowsUpdated = pstmtTransaksi.executeUpdate();
+                int inventoryRowsUpdated = pstmtInventory.executeUpdate();
+
+                // Check if both updates were successful
+                if (transaksiRowsUpdated > 0 && inventoryRowsUpdated > 0) {
+                    JOptionPane.showMessageDialog(null, "Status transaksi berhasil diupdate menjadi " + statusAkhir);
+                    // Reload data after updating status
+                    loadData();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal mengupdate status transaksi atau mengurangi stok barang.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Status awal bukan 'pending', tidak bisa menjalankan perubahan status.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         // TODO add your handling code here:
         int selectedRow = jTable1.getSelectedRow();
         if (selectedRow >= 0) {
-            int idTransaksi = (int) jTable1.getValueAt(selectedRow, 0);
-            updateStatusPeminjaman(idTransaksi, "disetujui");
+            String idTransaksi = (String) jTable1.getValueAt(selectedRow, 0);
+            String statusAwal = (String) jTable1.getValueAt(selectedRow, 6);
+            updateStatusWithApprove(idTransaksi, statusAwal, "Disetujui");
+            loadData();
         }
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
         // TODO add your handling code here:
-        dispose();
-        Dashboard dashboard = new Dashboard(_username, _role);
+        UserClass userClass = new UserClass();
+        UserClass.User user;
+        
+        if ("Admin".equalsIgnoreCase(_role)) {
+            user = userClass.new AdminUser(_username, _role);
+        } else {
+            user = userClass.new RegularUser(_username, _role);
+        }
+
+        Dashboard dashboard = new Dashboard(user);
         dashboard.setVisible(true);
+        dispose();
     }//GEN-LAST:event_jButton9ActionPerformed
 
+    private void updateStatusWithReject(String idTransaksi, String statusAwal, String statusAkhir) {
+        try {
+            // Check if the initial status is "Pending"
+            if ("Pending".equalsIgnoreCase(statusAwal)) {
+                // Update status in Transaksi table to "Ditolak"
+                String updateTransaksiQuery = "UPDATE Transaksi SET STATUS_PEMINJAMAN = ? WHERE ID_TRANSAKSI = ?";
+                PreparedStatement pstmtTransaksi = conn.prepareStatement(updateTransaksiQuery);
+                pstmtTransaksi.setString(1, statusAkhir);
+                pstmtTransaksi.setString(2, idTransaksi);
+
+                // Execute update
+                int transaksiRowsUpdated = pstmtTransaksi.executeUpdate();
+
+                // Check if the update was successful
+                if (transaksiRowsUpdated > 0) {
+                    JOptionPane.showMessageDialog(null, "Status transaksi berhasil diupdate menjadi " + statusAkhir);
+                    // Reload data after updating status
+                    loadData();
+                } else {
+                    JOptionPane.showMessageDialog(null, "Gagal mengupdate status transaksi.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Status awal bukan 'Pending', tidak bisa menjalankan perubahan status.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        // TODO add your handling code here:
+        int selectedRow = jTable1.getSelectedRow();
+        if (selectedRow >= 0) {
+            String idTransaksi = (String) jTable1.getValueAt(selectedRow, 0);
+            String statusAwal = (String) jTable1.getValueAt(selectedRow, 6);
+            updateStatusWithReject(idTransaksi, statusAwal, "Ditolak");
+            loadData();
+        }
+    }//GEN-LAST:event_jButton8ActionPerformed
+/*    private void deleteTransaction(String idTransaksi) {
+        try {
+            String deleteQuery = "DELETE FROM Transaksi WHERE ID_TRANSAKSI = ?";
+            PreparedStatement pstmt = conn.prepareStatement(deleteQuery);
+            pstmt.setString(1, idTransaksi);
+
+            int rowsDeleted = pstmt.executeUpdate();
+
+            if (rowsDeleted > 0) {
+                JOptionPane.showMessageDialog(null, "Data transaksi berhasil dihapus.");
+                // Reload data after deleting the transaction
+                loadData();
+            } else {
+                JOptionPane.showMessageDialog(null, "Gagal menghapus data transaksi.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }*/
     /**
      * @param args the command line arguments
      */
@@ -364,6 +514,7 @@ public class DataPeminjaman extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
+    private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel4;

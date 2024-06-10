@@ -5,6 +5,7 @@
  */
 package Frame;
 
+import Class.UserClass;
 import java.awt.Cursor;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -26,8 +27,7 @@ public class Dashboard extends javax.swing.JFrame {
     /**
      * Creates new form Dashboard
      */
-    String _username;
-    String _role;
+    private UserClass.User user;
     
     private static int lastRowCount = 0;
     
@@ -39,18 +39,24 @@ public class Dashboard extends javax.swing.JFrame {
     private static Statement stmt;
     private static ResultSet rs;
     
-    public Dashboard(String username, String role) {
+    public Dashboard(UserClass.User user) {
         initComponents();
         
-        this._role = role;
-        this._username = username;
+        this.user = user;
         
+        if (user.role.equals("Admin")) {
+            jButton14.setVisible(false);
+        }
         try {
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        
+        sumRegularUser();
+        sumBorrowed();
+        sumLogin();
     }
 
     /**
@@ -76,8 +82,6 @@ public class Dashboard extends javax.swing.JFrame {
         jButton15 = new javax.swing.JButton();
         label5 = new java.awt.Label();
         jLabel10 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
         jButton13 = new javax.swing.JButton();
         jButton14 = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
@@ -102,6 +106,7 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel29 = new javax.swing.JLabel();
         jPanel18 = new javax.swing.JPanel();
         jLabel11 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
         jPanel17 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
@@ -221,22 +226,6 @@ public class Dashboard extends javax.swing.JFrame {
 
         jLabel10.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/TU-logogram-238x300.jpg"))); // NOI18N
 
-        jLabel4.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setText("Notif");
-        jLabel4.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                jLabel4MousePressed(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                jLabel4MouseEntered(evt);
-            }
-        });
-
-        jLabel5.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel5.setText("0");
-
         jButton13.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jButton13.setText("Inventory");
         jButton13.addActionListener(new java.awt.event.ActionListener() {
@@ -262,10 +251,6 @@ public class Dashboard extends javax.swing.JFrame {
                 .addComponent(jLabel10)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(label5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(276, 276, 276)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton15)
                 .addGap(29, 29, 29)
@@ -280,14 +265,10 @@ public class Dashboard extends javax.swing.JFrame {
                 .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel20Layout.createSequentialGroup()
                         .addGap(28, 28, 28)
-                        .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jLabel4)
-                                .addComponent(jLabel5))
-                            .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jButton15)
-                                .addComponent(jButton13)
-                                .addComponent(jButton14))))
+                        .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jButton15)
+                            .addComponent(jButton13)
+                            .addComponent(jButton14)))
                     .addGroup(jPanel20Layout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addGroup(jPanel20Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -330,6 +311,11 @@ public class Dashboard extends javax.swing.JFrame {
 
         jLabel22.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
         jLabel22.setText("Sum Item");
+        jLabel22.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                jLabel22ComponentShown(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -395,6 +381,11 @@ public class Dashboard extends javax.swing.JFrame {
         jLabel25.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
         jLabel25.setForeground(new java.awt.Color(255, 255, 255));
         jLabel25.setText("Sum User");
+        jLabel25.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                jLabel25ComponentShown(evt);
+            }
+        });
 
         jLabel26.setForeground(new java.awt.Color(255, 255, 255));
         jLabel26.setText("New User Registration");
@@ -409,7 +400,7 @@ public class Dashboard extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel26)
                     .addComponent(jLabel25))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 116, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel24)
                 .addGap(21, 21, 21))
         );
@@ -493,23 +484,31 @@ public class Dashboard extends javax.swing.JFrame {
         jPanel18.setBackground(new java.awt.Color(255, 204, 204));
 
         jLabel11.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        jLabel11.setText("Loan Calculation for Week");
+        jLabel11.setText("Segerakan Pinjam Cuy");
+
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/ExampleBarang.jpg"))); // NOI18N
 
         javax.swing.GroupLayout jPanel18Layout = new javax.swing.GroupLayout(jPanel18);
         jPanel18.setLayout(jPanel18Layout);
         jPanel18Layout.setHorizontalGroup(
             jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel18Layout.createSequentialGroup()
-                .addContainerGap(298, Short.MAX_VALUE)
+                .addGap(29, 29, 29)
+                .addComponent(jLabel4)
+                .addContainerGap(44, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel18Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel11)
-                .addGap(287, 287, 287))
+                .addGap(302, 302, 302))
         );
         jPanel18Layout.setVerticalGroup(
             jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel18Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel11)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel4)
+                .addGap(51, 51, 51))
         );
 
         jPanel17.setBackground(new java.awt.Color(255, 204, 204));
@@ -572,7 +571,7 @@ public class Dashboard extends javax.swing.JFrame {
                     .addComponent(jLabel16)
                     .addComponent(jLabel17)
                     .addComponent(jLabel15))
-                .addContainerGap(28, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel19.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 51, 51)));
@@ -609,10 +608,10 @@ public class Dashboard extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(20, 20, 20)
+                                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, 361, Short.MAX_VALUE))))
@@ -637,9 +636,9 @@ public class Dashboard extends javax.swing.JFrame {
                         .addGap(42, 42, 42)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, 414, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(44, Short.MAX_VALUE))
+                .addContainerGap(42, Short.MAX_VALUE))
         );
 
         pack();
@@ -672,43 +671,95 @@ public class Dashboard extends javax.swing.JFrame {
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
         // TODO add your handling code here:
-        DataPeminjaman datapeminjaman = new DataPeminjaman(_username, _role);
+        DataPeminjaman datapeminjaman = new DataPeminjaman(user.username, user.role);
         datapeminjaman.setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
         // TODO add your handling code here:
-        Inventory inventory = new Inventory(_username, _role);
+        Inventory inventory = new Inventory(user.username, user.role);
         inventory.setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton13ActionPerformed
 
     private void jButton14ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton14ActionPerformed
         // TODO add your handling code here:
-        Rent_GUI Rent = new Rent_GUI(_username, _role);
+        Rent_GUI Rent = new Rent_GUI(user.username, user.role);
         Rent.setVisible(true);
         dispose();
     }//GEN-LAST:event_jButton14ActionPerformed
 
-    private void jLabel4MouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MouseEntered
-        // TODO add your handling code here:
-        jLabel4.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    }//GEN-LAST:event_jLabel4MouseEntered
-
-    private void jLabel4MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel4MousePressed
-        // TODO add your handling code here:
-        Notification notification = new Notification(this, true);
-        notification.setVisible(true);
-        jLabel5.setText("0");
-    }//GEN-LAST:event_jLabel4MousePressed
-
     private void jLabel3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel3MouseClicked
         // TODO add your handling code here:
-        dialogProfile profile = new dialogProfile(_username, getEmailByUsername(_username));
+        dialogProfile profile = new dialogProfile(user.username, getEmailByUsername(user.username));
         profile.setVisible(true);
     }//GEN-LAST:event_jLabel3MouseClicked
+
+    private void jLabel22ComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jLabel22ComponentShown
+        // TODO add your handling code here:
+       
+    }//GEN-LAST:event_jLabel22ComponentShown
+
+    private void jLabel25ComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jLabel25ComponentShown
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jLabel25ComponentShown
     
+    private void sumBorrowed() {
+        try {
+        // Query to count transactions with status "Disetujui"
+        String countApprovedQuery = "SELECT COUNT(*) AS total FROM Transaksi WHERE STATUS_PEMINJAMAN = 'Disetujui'";
+            PreparedStatement pstmtCountApproved = conn.prepareStatement(countApprovedQuery);
+            ResultSet rsCountApproved = pstmtCountApproved.executeQuery();
+
+            if (rsCountApproved.next()) {
+                String totalApproved = rsCountApproved.getString("total");
+                jLabel22.setText(totalApproved);
+            } else {
+                jLabel22.setText("0");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            jLabel22.setText("Error!");
+        }
+    }
+    private void sumRegularUser() {
+        try {
+        // Query to count users with role "Regular User"
+            String countRegularUsersQuery = "SELECT COUNT(*) AS total FROM User WHERE role = 'Regular User'";
+            PreparedStatement pstmtCountRegularUsers = conn.prepareStatement(countRegularUsersQuery);
+            ResultSet rsCountRegularUsers = pstmtCountRegularUsers.executeQuery();
+
+            if (rsCountRegularUsers.next()) {
+                String totalRegularUsers = rsCountRegularUsers.getString("total");
+                jLabel25.setText(totalRegularUsers);
+            } else {
+                jLabel25.setText("0");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            jLabel25.setText("Error!");
+        }
+    }
+    
+    private void sumLogin() {
+        try {
+        // Query to count users with role "Regular User"
+            String countRegularUsersQuery = "SELECT COUNT(*) AS total FROM User WHERE role = 'Regular User' or role = 'Admin'";
+            PreparedStatement pstmtCountRegularUsers = conn.prepareStatement(countRegularUsersQuery);
+            ResultSet rsCountRegularUsers = pstmtCountRegularUsers.executeQuery();
+
+            if (rsCountRegularUsers.next()) {
+                String totalRegularUsers = rsCountRegularUsers.getString("total");
+                jLabel28.setText(totalRegularUsers);
+            } else {
+                jLabel28.setText("0");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            jLabel28.setText("Error!");
+        }
+    }
     public static String getEmailByUsername(String username) {
         String email = null;
 
@@ -794,7 +845,6 @@ public class Dashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
